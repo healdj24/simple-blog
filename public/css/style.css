@@ -11,7 +11,7 @@ body {
 /* Header - simple navigation */
 .header {
     padding: 20px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #BEBEFF;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -67,7 +67,7 @@ body {
 }
 
 .sidebar-card {
-    border: 1px solid #ddd;
+    border: 1px solid #BEBEFF;
     padding: 20px;
     position: sticky;
     top: 20px;
@@ -83,7 +83,7 @@ body {
 
 /* Blog posts */
 .post {
-    border: 1px solid #ddd;
+    border: 1px solid #BEBEFF;
     padding: 20px;
     margin-bottom: 30px;
 }
@@ -131,14 +131,14 @@ body {
 
 /* Archive page */
 .archive-list {
-    border: 1px solid #ddd;
+    border: 1px solid #BEBEFF;
     padding: 20px;
 }
 
 .archive-item {
     margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #BEBEFF;
 }
 
 .archive-item:last-child {
@@ -166,7 +166,7 @@ body {
 
 /* No posts message */
 .no-posts {
-    border: 1px solid #ddd;
+    border: 1px solid #BEBEFF;
     padding: 20px;
     text-align: center;
     color: #888;

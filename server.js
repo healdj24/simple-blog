@@ -139,6 +139,11 @@ app.get('/ss', async (req, res) => {
     res.render('ss', { notes, getPreview });
 });
 
+// Misc page
+app.get('/misc', (req, res) => {
+    res.render('misc');
+});
+
 // About page
 app.get('/about', async (req, res) => {
     const about = await getAbout();
