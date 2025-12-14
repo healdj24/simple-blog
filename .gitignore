@@ -3,3 +3,6 @@ node_modules/
 *.log
 .DS_Store
 .vercel
+blog.db
+upload-to-turso.js
+init-db.js
