@@ -48,6 +48,40 @@ function getPreview(content) {
     return firstLine;
 }
 
+// Format content with quote blocks (lines starting with |)
+function formatContent(content) {
+    const lines = content.split('\n');
+    let formatted = '';
+    let inQuote = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.trim().startsWith('|')) {
+            // Quote line
+            if (!inQuote) {
+                formatted += '<blockquote class="quote-block">';
+                inQuote = true;
+            }
+            formatted += line.trim().substring(1).trim() + '\n';
+        } else {
+            // Regular line
+            if (inQuote) {
+                formatted += '</blockquote>';
+                inQuote = false;
+            }
+            formatted += line + '\n';
+        }
+    }
+
+    // Close any open quote
+    if (inQuote) {
+        formatted += '</blockquote>';
+    }
+
+    return formatted;
+}
+
 async function getAbout() {
     const result = await db.execute({
         sql: 'SELECT value FROM settings WHERE key = ?',
@@ -118,7 +152,7 @@ app.get('/essay/:id', async (req, res) => {
     if (!post) {
         return res.redirect('/');
     }
-    res.render('single', { post, getPreview });
+    res.render('single', { post, getPreview, formatContent });
 });
 
 // Individual note page
@@ -128,7 +162,7 @@ app.get('/note/:id', async (req, res) => {
     if (!post) {
         return res.redirect('/ss');
     }
-    res.render('single', { post, getPreview });
+    res.render('single', { post, getPreview, formatContent });
 });
 
 // Archive page
