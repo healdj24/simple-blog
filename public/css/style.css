@@ -120,15 +120,6 @@ body {
     word-wrap: break-word;
 }
 
-.quote-block {
-    border-left: 4px solid #333;
-    padding-left: 20px;
-    margin: 20px 0;
-    font-style: italic;
-    color: #333;
-    white-space: pre-wrap;
-}
-
 /* Archive page */
 .archive-list {
     border: 1px solid #ddd;
