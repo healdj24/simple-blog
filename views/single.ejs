@@ -25,7 +25,7 @@
                 <span class="post-subheading"><%= preview %></span>
             <% } %>
             <span class="post-date"><%= new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
-            <div class="post-content"><%= post.content %></div>
+            <div class="post-content"><%- formatContent(post.content) %></div>
         </div>
 
         <div style="margin-top: 30px;">

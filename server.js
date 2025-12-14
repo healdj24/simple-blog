@@ -51,6 +51,40 @@ function getPreview(content) {
     return firstLine;
 }
 
+// Format content with quote blocks (lines starting with |)
+function formatContent(content) {
+    const lines = content.split('\n');
+    let formatted = '';
+    let inQuote = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.trim().startsWith('|')) {
+            // Quote line
+            if (!inQuote) {
+                formatted += '<blockquote class="quote-block">';
+                inQuote = true;
+            }
+            formatted += line.trim().substring(1).trim() + '\n';
+        } else {
+            // Regular line
+            if (inQuote) {
+                formatted += '</blockquote>';
+                inQuote = false;
+            }
+            formatted += line + '\n';
+        }
+    }
+
+    // Close any open quote
+    if (inQuote) {
+        formatted += '</blockquote>';
+    }
+
+    return formatted;
+}
+
 function savePosts(posts) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(posts, null, 2));
 }
@@ -111,7 +145,7 @@ app.get('/essay/:id', (req, res) => {
     if (!post) {
         return res.redirect('/');
     }
-    res.render('single', { post, getPreview });
+    res.render('single', { post, getPreview, formatContent });
 });
 
 // Individual note page
@@ -121,7 +155,7 @@ app.get('/note/:id', (req, res) => {
     if (!post) {
         return res.redirect('/ss');
     }
-    res.render('single', { post, getPreview });
+    res.render('single', { post, getPreview, formatContent });
 });
 
 // Archive page
