@@ -29,22 +29,8 @@ const DATA_FILE = path.join(__dirname, 'posts.json');
 const ABOUT_FILE = path.join(__dirname, 'about.json');
 const SIDEBAR_FILE = path.join(__dirname, 'sidebar.json');
 
-// Initialize posts file if it doesn't exist
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-}
-
-// Initialize about file if it doesn't exist
-if (!fs.existsSync(ABOUT_FILE)) {
-    fs.writeFileSync(ABOUT_FILE, JSON.stringify({ content: "hey, i'm jed" }));
-}
-
-// Initialize sidebar file if it doesn't exist
-if (!fs.existsSync(SIDEBAR_FILE)) {
-    fs.writeFileSync(SIDEBAR_FILE, JSON.stringify({
-        topics: ['traveling for free', 'flexibility vs strength', 'automating my job', 'agentic future']
-    }));
-}
+// Note: Files must exist in the deployment
+// Vercel filesystem is read-only, so we don't initialize files here
 
 // Helper functions
 function getPosts() {
