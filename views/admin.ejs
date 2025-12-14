@@ -194,6 +194,69 @@
             postForm.action = '/admin/post';
             submitBtn.textContent = 'publish';
             cancelEditBtn.style.display = 'none';
+            // Clear autosave
+            localStorage.removeItem('draft_title');
+            localStorage.removeItem('draft_content');
+            localStorage.removeItem('draft_type');
+        });
+
+        // Auto-save draft to localStorage
+        function saveDraft() {
+            const type = postTypeInput.value;
+            // Only save if not editing an existing post
+            if (!editIdInput.value && type !== 'about') {
+                localStorage.setItem('draft_title', titleInput.value);
+                localStorage.setItem('draft_content', contentTextarea.value);
+                localStorage.setItem('draft_type', type);
+            }
+        }
+
+        // Save draft every 2 seconds while typing
+        let saveTimeout;
+        titleInput.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveDraft, 2000);
+        });
+
+        contentTextarea.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveDraft, 2000);
+        });
+
+        // Restore draft on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const draftTitle = localStorage.getItem('draft_title');
+            const draftContent = localStorage.getItem('draft_content');
+            const draftType = localStorage.getItem('draft_type');
+
+            if (draftContent && draftContent.trim() !== '') {
+                const restore = confirm('You have an unsaved draft. Restore it?');
+                if (restore) {
+                    if (draftTitle) titleInput.value = draftTitle;
+                    contentTextarea.value = draftContent;
+                    if (draftType) {
+                        postTypeInput.value = draftType;
+                        // Update active button
+                        toggleBtns.forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.type === draftType);
+                        });
+                        // Show/hide sidebar based on type
+                        sidebarEditor.style.display = draftType === 'post' ? 'block' : 'none';
+                    }
+                } else {
+                    // Clear draft if user doesn't want it
+                    localStorage.removeItem('draft_title');
+                    localStorage.removeItem('draft_content');
+                    localStorage.removeItem('draft_type');
+                }
+            }
+        });
+
+        // Clear draft after successful submission
+        postForm.addEventListener('submit', () => {
+            localStorage.removeItem('draft_title');
+            localStorage.removeItem('draft_content');
+            localStorage.removeItem('draft_type');
         });
     </script>
 </body>
