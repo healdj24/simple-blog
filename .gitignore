@@ -1,0 +1,6 @@
+node_modules/
+posts.json
+.env
+*.log
+.DS_Store
+.vercel

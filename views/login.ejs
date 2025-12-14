@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>login</h1>
+
+            <% if (error) { %>
+                <div class="error-message"><%= error %></div>
+            <% } %>
+
+            <form method="POST" action="/admin/login">
+                <div class="form-group">
+                    <label for="username">username</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="submit-btn" style="width: 100%;">login</button>
+            </form>
+
+            <div class="view-site-link">
+                <a href="/">← back to blog</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
