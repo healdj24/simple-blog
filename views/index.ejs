@@ -6,9 +6,53 @@
     <title>blog</title>
     <link rel="icon" type="image/png" href="/smileyslimeyboy.png">
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .landing-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('/images/misc/kokedera.webp');
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .landing-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .header {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .header.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .container-with-sidebar {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease 0.2s, transform 0.4s ease 0.2s;
+        }
+
+        .container-with-sidebar.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
-    <div class="header">
+    <div class="landing-screen" id="landingScreen"></div>
+
+    <div class="header" id="header">
         <nav>
             <a href="/ss">notes</a>
             <a href="/">essays</a>
@@ -18,7 +62,7 @@
         <a href="/admin/login" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
     </div>
 
-    <div class="container-with-sidebar">
+    <div class="container-with-sidebar" id="content">
         <div class="main-content">
             <% if (posts.length === 0) { %>
                 <div class="no-posts">
@@ -60,5 +104,24 @@
 
     <div class="footer">
     </div>
+
+    <script>
+        const landingScreen = document.getElementById('landingScreen');
+        const header = document.getElementById('header');
+        const content = document.getElementById('content');
+
+        // Show landing screen and wait for click
+        landingScreen.addEventListener('click', () => {
+            // Fade out landing screen
+            landingScreen.classList.add('fade-out');
+
+            // After landing screen fades, show content with snap animation
+            setTimeout(() => {
+                landingScreen.style.display = 'none';
+                header.classList.add('show');
+                content.classList.add('show');
+            }, 300);
+        });
+    </script>
 </body>
 </html>

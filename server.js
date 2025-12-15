@@ -124,16 +124,25 @@ function requireAuth(req, res, next) {
 }
 
 // Routes
-// Main blog page - posts
-app.get('/', async (req, res) => {
+// Main landing page - just kokedera image
+app.get('/', (req, res) => {
+    res.render('landing');
+});
+
+// Essays page
+app.get('/essays', async (req, res) => {
     const allPosts = await getPosts();
     const posts = allPosts.filter(p => p.type === 'post').sort((a, b) => new Date(b.date) - new Date(a.date));
     const sidebar = await getSidebar();
-    res.render('index', { posts, sidebarTopics: sidebar.topics, getPreview });
+    res.render('essays', { posts, sidebarTopics: sidebar.topics, getPreview });
 });
 
-// SS page - notes
+// SS page - notes (only accessible in development)
 app.get('/ss', async (req, res) => {
+    // Check if running on Vercel (production)
+    if (process.env.VERCEL || process.env.TURSO_DATABASE_URL) {
+        return res.redirect('/essays');
+    }
     const allPosts = await getPosts();
     const notes = allPosts.filter(p => p.type === 'note').sort((a, b) => new Date(b.date) - new Date(a.date));
     res.render('ss', { notes, getPreview });
