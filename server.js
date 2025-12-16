@@ -135,11 +135,9 @@ app.get('/writing', async (req, res) => {
     const allPosts = await getPosts();
     const notes = allPosts.filter(p => p.type === 'note').sort((a, b) => new Date(b.date) - new Date(a.date));
     const posts = allPosts.filter(p => p.type === 'post').sort((a, b) => new Date(b.date) - new Date(a.date));
-    const sidebar = await getSidebar();
     res.render('writing', {
         notes,
         posts,
-        sidebarTopics: sidebar.topics,
         getPreview,
         isAdmin: req.session.isAdmin || false
     });
