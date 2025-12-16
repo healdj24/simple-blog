@@ -10,14 +10,15 @@
 <body>
     <div class="header">
         <nav>
-            <% if (!process.env.VERCEL && !process.env.TURSO_DATABASE_URL) { %>
-                <a href="/ss">notes</a>
-            <% } %>
-            <a href="/essays">essays</a>
+            <a href="/writing">writing</a>
+            <a href="/shelf">shelf</a>
             <a href="/misc">misc</a>
-            <a href="/about">about</a>
         </nav>
-        <a href="/admin/login" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
+        <% if (isAdmin) { %>
+            <a href="/admin/logout" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">logout</a>
+        <% } else { %>
+            <a href="#" onclick="openLoginModal(); return false;" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
+        <% } %>
     </div>
 
     <div class="container">
@@ -38,5 +39,7 @@
 
     <div class="footer">
     </div>
+
+    <%- include('partials/login-modal') %>
 </body>
 </html>

@@ -14,14 +14,25 @@
                 <a href="/ss">notes</a>
             <% } %>
             <a href="/essays">essays</a>
+            <a href="/shelf">shelf</a>
             <a href="/misc">misc</a>
             <a href="/about">about</a>
         </nav>
-        <a href="/admin/login" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
+        <% if (isAdmin) { %>
+            <a href="/admin/logout" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">logout</a>
+        <% } else { %>
+            <a href="#" onclick="openLoginModal(); return false;" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
+        <% } %>
     </div>
 
     <div class="container-with-sidebar">
         <div class="main-content">
+            <% if (isAdmin) { %>
+                <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #ddd;">
+                    <button onclick="showAddEssay()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">+ add essay</button>
+                </div>
+            <% } %>
+
             <% if (posts.length === 0) { %>
                 <div class="no-posts">
                     no essays yet
@@ -29,17 +40,25 @@
             <% } else { %>
                 <div class="archive-list">
                     <% posts.forEach(post => { %>
-                        <div class="archive-item">
-                            <div>
+                        <div class="archive-item" style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                            <div style="flex: 1;">
                                 <a href="/essay/<%= post.id %>"><%= post.title %></a>
                                 <span class="post-date" style="display: inline; margin-left: 10px;">
                                     <%= new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
                                 </span>
+                                <% const preview = getPreview(post.content); %>
+                                <% if (preview) { %>
+                                    <div class="post-subheading" style="margin-top: 4px; font-size: 0.9em;">
+                                        <%= preview %>
+                                    </div>
+                                <% } %>
                             </div>
-                            <% const preview = getPreview(post.content); %>
-                            <% if (preview) { %>
-                                <div class="post-subheading" style="margin-top: 4px; font-size: 0.9em;">
-                                    <%= preview %>
+                            <% if (isAdmin) { %>
+                                <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                    <button onclick="editEssay('<%= post.id %>')" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">edit</button>
+                                    <form method="POST" action="/admin/delete/<%= post.id %>" style="margin: 0;" onsubmit="return confirm('delete this essay?');">
+                                        <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">delete</button>
+                                    </form>
                                 </div>
                             <% } %>
                         </div>
@@ -56,11 +75,115 @@
                         <li><%= topic %></li>
                     <% }) %>
                 </ul>
+                <% if (isAdmin) { %>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #BEBEFF;">
+                        <button onclick="editSidebar()" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase; width: 100%;">edit topics</button>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
 
     <div class="footer">
     </div>
+
+    <%- include('partials/login-modal') %>
+
+    <% if (isAdmin) { %>
+    <!-- Edit/Add Essay Modal -->
+    <div class="modal" id="essayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+        <div class="modal-content" style="background-color: #fff; padding: 40px; max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative; width: 100%;">
+            <button onclick="closeEssayModal()" style="position: absolute; top: 15px; right: 20px; font-size: 1.5em; cursor: pointer; color: #999; background: none; border: none;">&times;</button>
+            <h2 id="essayModalTitle" style="font-size: 1.5em; margin-bottom: 20px; color: #333; font-weight: normal;">add essay</h2>
+            <form id="essayForm" method="POST" action="/admin/post">
+                <input type="hidden" name="type" value="post">
+                <input type="hidden" name="editId" id="editId" value="">
+
+                <div style="margin-bottom: 15px;">
+                    <input type="text" name="title" id="essayTitle" required placeholder="title" style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box;">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <textarea name="content" id="essayContent" required placeholder="content" style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box; min-height: 200px; resize: vertical; line-height: 1.6;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeEssayModal()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                    <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Sidebar Modal -->
+    <div class="modal" id="sidebarModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+        <div class="modal-content" style="background-color: #fff; padding: 40px; max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative; width: 100%;">
+            <button onclick="closeSidebarModal()" style="position: absolute; top: 15px; right: 20px; font-size: 1.5em; cursor: pointer; color: #999; background: none; border: none;">&times;</button>
+            <h2 style="font-size: 1.5em; margin-bottom: 20px; color: #333; font-weight: normal;">edit topics</h2>
+            <form id="sidebarForm" method="POST" action="/admin/sidebar">
+                <div style="margin-bottom: 15px;">
+                    <textarea name="topics" id="sidebarTopics" required placeholder="one topic per line" style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box; min-height: 200px; resize: vertical; line-height: 1.6;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="closeSidebarModal()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                    <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const postsData = <%= JSON.stringify(posts) %>;
+        const sidebarData = <%= JSON.stringify(sidebarTopics) %>;
+
+        function showAddEssay() {
+            document.getElementById('essayModalTitle').textContent = 'add essay';
+            document.getElementById('essayForm').action = '/admin/post';
+            document.getElementById('editId').value = '';
+            document.getElementById('essayTitle').value = '';
+            document.getElementById('essayContent').value = '';
+            document.getElementById('essayModal').style.display = 'flex';
+        }
+
+        function editEssay(postId) {
+            const post = postsData.find(p => p.id === postId);
+            if (!post) return;
+
+            document.getElementById('essayModalTitle').textContent = 'edit essay';
+            document.getElementById('essayForm').action = `/admin/update/${postId}`;
+            document.getElementById('editId').value = postId;
+            document.getElementById('essayTitle').value = post.title;
+            document.getElementById('essayContent').value = post.content;
+            document.getElementById('essayModal').style.display = 'flex';
+        }
+
+        function closeEssayModal() {
+            document.getElementById('essayModal').style.display = 'none';
+        }
+
+        function editSidebar() {
+            document.getElementById('sidebarTopics').value = sidebarData.join('\n');
+            document.getElementById('sidebarModal').style.display = 'flex';
+        }
+
+        function closeSidebarModal() {
+            document.getElementById('sidebarModal').style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('essayModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'essayModal') {
+                closeEssayModal();
+            }
+        });
+
+        document.getElementById('sidebarModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'sidebarModal') {
+                closeSidebarModal();
+            }
+        });
+    </script>
+    <% } %>
 </body>
 </html>

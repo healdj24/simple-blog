@@ -1,0 +1,70 @@
+<!-- Login Modal -->
+<div class="login-modal" id="loginModal">
+    <div class="login-modal-content">
+        <button class="login-modal-close" onclick="closeLoginModal()">&times;</button>
+        <h2>login</h2>
+        <div id="loginError" class="login-error" style="display: none;"></div>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="login-form-group">
+                <label for="username">username</label>
+                <input type="text" id="username" name="username" required autofocus>
+            </div>
+            <div class="login-form-group">
+                <label for="password">password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="login-btn">login</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openLoginModal() {
+        document.getElementById('loginModal').classList.add('active');
+        document.getElementById('username').focus();
+    }
+
+    function closeLoginModal() {
+        document.getElementById('loginModal').classList.remove('active');
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('loginForm').reset();
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('loginModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'loginModal') {
+            closeLoginModal();
+        }
+    });
+
+    async function handleLogin(event) {
+        event.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('loginError');
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Reload the page to show admin controls
+                window.location.reload();
+            } else {
+                errorDiv.textContent = data.error || 'Invalid credentials';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Login failed. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    }
+</script>

@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shelf</title>
+    <link rel="icon" type="image/png" href="/smileyslimeyboy.png">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* Additional shelf-specific styles */
+        .tabs {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 0;
+            cursor: pointer;
+            font-size: 1em;
+            color: #999;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            text-transform: lowercase;
+        }
+
+        .tab:hover {
+            color: #666;
+        }
+
+        .tab.active {
+            color: #333;
+            border-bottom: 2px solid #333;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Grid layout for books and movies */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .grid {
+                grid-template-columns: repeat(8, 1fr);
+            }
+        }
+
+        .grid-item {
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .cover {
+            width: 100%;
+            height: 0;
+            padding-bottom: 150%; /* 2:3 aspect ratio (3/2 = 1.5 = 150%) */
+            position: relative;
+            background-color: #f5f5f5;
+            border: 1px solid #BEBEFF;
+            overflow: hidden;
+        }
+
+        .cover img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 0.9em;
+            background: white;
+            width: 19px;
+            height: 19px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid #BEBEFF;
+            border-bottom: 1px solid #BEBEFF;
+            z-index: 10;
+        }
+
+        /* List layout for essays */
+        .list {
+            max-width: 720px;
+        }
+
+        .list-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #BEBEFF;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 15px;
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-size: 1em;
+            color: #333;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .list-item-title:hover {
+            color: #BEBEFF !important;
+            text-decoration: underline;
+        }
+
+        a.list-item-title:hover {
+            color: #BEBEFF !important;
+            text-decoration: underline;
+        }
+
+        .list-item-author {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .list-item-source {
+            font-size: 0.85em;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Admin controls */
+        .admin-controls {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .add-btn {
+            background: none;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-family: Georgia, serif;
+            text-transform: lowercase;
+        }
+
+        .add-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .edit-btn, .delete-btn {
+            background: none;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-family: Georgia, serif;
+            text-transform: lowercase;
+        }
+
+        .edit-btn:hover, .delete-btn:hover {
+            background: #f5f5f5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 40px;
+            max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            width: 100%;
+            border: 1px solid #BEBEFF;
+        }
+
+        /* Landscape modal for essays */
+        .modal-content.essay-modal {
+            max-width: 600px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+            background: none;
+            border: none;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-title {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            line-height: 1.3;
+        }
+
+        .modal-meta {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .modal-review {
+            font-size: 0.8em;
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .modal-cover {
+            width: 105px;
+            height: 158px;
+            margin-bottom: 20px;
+            border: 1px solid #BEBEFF;
+            overflow: hidden;
+        }
+
+        .modal-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Edit form in modal */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: normal;
+            color: #333;
+            font-size: 0.95em;
+            text-transform: lowercase;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-family: Georgia, serif;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .no-items {
+            text-align: center;
+            color: #888;
+            padding: 60px 20px;
+            font-size: 1em;
+        }
+
+        .year-group {
+            margin-bottom: 50px;
+        }
+
+        .year-header {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <nav>
+            <a href="/writing">writing</a>
+            <a href="/shelf">shelf</a>
+            <a href="/misc">misc</a>
+        </nav>
+        <% if (isAdmin) { %>
+            <a href="/admin/logout" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">logout</a>
+        <% } else { %>
+            <a href="#" onclick="openLoginModal(); return false;" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
+        <% } %>
+    </div>
+
+    <div class="container shelf-container">
+        <!-- About Section -->
+        <div style="margin-bottom: 40px;">
+            <div id="about-content-display" class="archive-list" style="position: relative;">
+                <div style="white-space: pre-wrap; line-height: 1.6;"><%= aboutContent || 'No about content yet.' %></div>
+                <% if (isAdmin) { %>
+                    <div style="position: absolute; top: 15px; right: 15px;">
+                        <button onclick="toggleAboutEdit()" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">edit</button>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if (isAdmin) { %>
+                <!-- Inline Edit About Form -->
+                <div id="about-edit-form" style="display: none; border: 1px solid #BEBEFF; padding: 20px;">
+                    <form method="POST" action="/admin/about">
+                        <div style="margin-bottom: 15px;">
+                            <textarea name="content" id="about-textarea" required
+                                      style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; min-height: 150px; resize: vertical; box-sizing: border-box; line-height: 1.6;"><%= aboutContent %></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="toggleAboutEdit()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                        </div>
+                    </form>
+                </div>
+            <% } %>
+        </div>
+
+        <% if (isAdmin) { %>
+            <div class="admin-controls" id="admin-controls" style="margin-bottom: 20px;">
+                <button class="add-btn" id="add-btn" onclick="addCurrentType()">+ add book</button>
+                <button class="add-btn" onclick="editFavoritesCurrentType()" style="margin-left: 8px;">edit favorites</button>
+                <button class="add-btn" onclick="editMustReadsCurrentType()" style="margin-left: 8px;">edit must-reads</button>
+            </div>
+        <% } %>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="books">bookshelf</div>
+            <div class="tab" data-tab="movies">movie shelf</div>
+            <div class="tab" data-tab="essays">essays</div>
+        </div>
+
+        <!-- Books Tab -->
+        <div class="tab-content active" id="books-content">
+            <% if (books.length === 0) { %>
+                <div class="no-items">no books yet</div>
+            <% } else { %>
+                <% const booksByYear = {}; %>
+                <% books.forEach(book => {
+                    const year = book.year || 'Unknown';
+                    if (!booksByYear[year]) booksByYear[year] = [];
+                    booksByYear[year].push(book);
+                }); %>
+                <% Object.keys(booksByYear).sort((a, b) => b - a).forEach(year => { %>
+                    <div class="year-group">
+                        <div class="year-header"><%= year %></div>
+                        <div class="grid">
+                            <% booksByYear[year].forEach(book => { %>
+                                <div class="grid-item" onclick="showItemModal('<%= book.id %>')">
+                                    <div class="cover">
+                                        <% if (book.badge) { %>
+                                            <span class="badge"><%= book.badge %></span>
+                                        <% } %>
+                                        <% if (book.cover_url) { %>
+                                            <img src="<%= book.cover_url %>" alt="<%= book.title %>">
+                                        <% } else { %>
+                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 10px; text-align: center; font-size: 0.9em; color: #666; box-sizing: border-box;">
+                                                <%= book.title %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+
+        <!-- Movies Tab -->
+        <div class="tab-content" id="movies-content">
+            <% if (movies.length === 0) { %>
+                <div class="no-items">no movies yet</div>
+            <% } else { %>
+                <% const moviesByYear = {}; %>
+                <% movies.forEach(movie => {
+                    const year = movie.year || 'Unknown';
+                    if (!moviesByYear[year]) moviesByYear[year] = [];
+                    moviesByYear[year].push(movie);
+                }); %>
+                <% Object.keys(moviesByYear).sort((a, b) => b - a).forEach(year => { %>
+                    <div class="year-group">
+                        <div class="year-header"><%= year %></div>
+                        <div class="grid">
+                            <% moviesByYear[year].forEach(movie => { %>
+                                <div class="grid-item" onclick="showItemModal('<%= movie.id %>')">
+                                    <div class="cover">
+                                        <% if (movie.badge) { %>
+                                            <span class="badge"><%= movie.badge %></span>
+                                        <% } %>
+                                        <% if (movie.cover_url) { %>
+                                            <img src="<%= movie.cover_url %>" alt="<%= movie.title %>">
+                                        <% } else { %>
+                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 10px; text-align: center; font-size: 0.9em; color: #666; box-sizing: border-box;">
+                                                <%= movie.title %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+
+        <!-- Essays Tab -->
+        <div class="tab-content" id="essays-content">
+            <% if (isAdmin) { %>
+                <!-- Inline Add Essay Form -->
+                <div id="essay-add-form" style="display: none; border: 1px solid #BEBEFF; padding: 20px; margin-bottom: 30px;">
+                    <form method="POST" action="/admin/shelf/add">
+                        <input type="hidden" name="type" value="essay">
+
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" name="title" placeholder="title" required
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box;">
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="text" name="author" placeholder="author"
+                                   style="width: 50%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 0.95em; box-sizing: border-box;">
+                            <input type="text" name="source" placeholder="source"
+                                   style="width: 50%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 0.95em; box-sizing: border-box;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <input type="url" name="url" placeholder="url"
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 0.95em; box-sizing: border-box;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <textarea name="review" placeholder="thoughts..."
+                                      style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; min-height: 150px; resize: vertical; box-sizing: border-box; line-height: 1.6;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="toggleEssayForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">post</button>
+                        </div>
+                    </form>
+                </div>
+            <% } %>
+
+            <% if (essays.length === 0) { %>
+                <div class="no-items">no essays yet</div>
+            <% } else { %>
+                <div class="list">
+                    <% essays.forEach(essay => { %>
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <% if (essay.url) { %>
+                                    <a href="<%= essay.url %>" target="_blank" rel="noopener noreferrer" class="list-item-title" style="text-decoration: none; color: #333;"><%= essay.title %></a>
+                                <% } else { %>
+                                    <div class="list-item-title"><%= essay.title %></div>
+                                <% } %>
+                                <% if (essay.author || essay.source) { %>
+                                    <div class="list-item-author">
+                                        <% if (essay.author) { %><%= essay.author %><% } %>
+                                        <% if (essay.author && essay.source) { %> · <% } %>
+                                        <% if (essay.source) { %><%= essay.source %><% } %>
+                                    </div>
+                                <% } %>
+                            </div>
+                            <% if (isAdmin) { %>
+                                <div class="item-actions">
+                                    <button class="edit-btn" onclick="showEditModal('<%= essay.id %>')">edit</button>
+                                    <form method="POST" action="/admin/shelf/delete/<%= essay.id %>" style="margin: 0;" onsubmit="return confirm('delete this item?');">
+                                        <button type="submit" class="delete-btn">delete</button>
+                                    </form>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- View/Edit Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <div class="footer"></div>
+
+    <%- include('partials/login-modal') %>
+
+    <script>
+        const isAdmin = <%= isAdmin ? 'true' : 'false' %>;
+        const allItems = <%- JSON.stringify([].concat(books).concat(movies).concat(essays)) %>;
+
+        // Track current tab type
+        let currentType = 'book';
+
+        // Toggle about edit form
+        function toggleAboutEdit() {
+            const display = document.getElementById('about-content-display');
+            const form = document.getElementById('about-edit-form');
+
+            if (form.style.display === 'none' || form.style.display === '') {
+                display.style.display = 'none';
+                form.style.display = 'block';
+            } else {
+                display.style.display = 'block';
+                form.style.display = 'none';
+            }
+        }
+
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tabName + '-content').classList.add('active');
+
+                // Update current type and button text
+                if (tabName === 'books') {
+                    currentType = 'book';
+                    document.getElementById('add-btn').textContent = '+ add book';
+                } else if (tabName === 'movies') {
+                    currentType = 'movie';
+                    document.getElementById('add-btn').textContent = '+ add movie';
+                } else if (tabName === 'essays') {
+                    currentType = 'essay';
+                    document.getElementById('add-btn').textContent = '+ add essay';
+                }
+            });
+        });
+
+        // Helper functions for current tab type
+        function addCurrentType() {
+            if (currentType === 'essay') {
+                toggleEssayForm();
+            } else {
+                showAddModal(currentType);
+            }
+        }
+
+        function toggleEssayForm() {
+            const form = document.getElementById('essay-add-form');
+            if (!form) {
+                console.error('Essay form not found!');
+                return;
+            }
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+                // Clear form fields
+                form.querySelector('form').reset();
+            }
+        }
+
+        function editFavoritesCurrentType() {
+            showEditFavorites(currentType);
+        }
+
+        function editMustReadsCurrentType() {
+            showEditMustReads(currentType);
+        }
+
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modal-body');
+
+        function showItemModal(itemId) {
+            const item = allItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            const isEssay = item.type === 'essay';
+
+            // Update modal width for essays
+            const modalContent = document.querySelector('.modal-content');
+            if (isEssay) {
+                modalContent.classList.add('essay-modal');
+            } else {
+                modalContent.classList.remove('essay-modal');
+            }
+
+            let metaText = '';
+            if (item.author) metaText += item.author;
+            if (item.source) metaText += (metaText ? ' · ' : '') + item.source;
+
+            let coverHTML = '';
+            if (item.cover_url && !isEssay) {
+                coverHTML = `
+                    <div class="modal-cover">
+                        <img src="${item.cover_url}" alt="${item.title}">
+                    </div>
+                `;
+            }
+
+            let adminButtons = '';
+            if (isAdmin) {
+                adminButtons = `
+                    <div class="form-actions">
+                        <button class="edit-btn" onclick="showEditModal('${item.id}')">edit</button>
+                        <form method="POST" action="/admin/shelf/delete/${item.id}" style="margin: 0;" onsubmit="return confirm('delete this item?');">
+                            <button type="submit" class="delete-btn">delete</button>
+                        </form>
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = `
+                ${coverHTML}
+                <h2 class="modal-title">${item.title}</h2>
+                <div class="modal-meta">${metaText}</div>
+                <div class="modal-review">${item.review || 'No review yet.'}</div>
+                ${adminButtons}
+            `;
+            modal.classList.add('active');
+        }
+
+        function showAddModal(type) {
+            const isEssay = type === 'essay';
+
+            // Update modal width for essays
+            const modalContent = document.querySelector('.modal-content');
+            if (isEssay) {
+                modalContent.classList.add('essay-modal');
+            } else {
+                modalContent.classList.remove('essay-modal');
+            }
+
+            // Cover upload HTML - only for books and movies
+            let coverHTML = '';
+            if (!isEssay) {
+                coverHTML = `
+                    <!-- Cover placeholder matching modal-cover size -->
+                    <div style="width: 105px; height: 158px; background: #f5f5f5; border: 1px solid #BEBEFF; display: flex; align-items: center; justify-content: center; font-size: 3em; color: #ccc; cursor: pointer; position: relative; margin-bottom: 20px;" id="cover-preview">
+                        +
+                        <input type="file" id="cover-upload" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                    </div>
+                    <input type="hidden" name="cover_url" id="cover_url">
+                `;
+            }
+
+            // Meta fields - different structure for essays
+            let metaHTML = '';
+            if (isEssay) {
+                metaHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <input type="text" name="author" id="author" placeholder="Author"
+                                   style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 50%; box-sizing: border-box;">
+                            <input type="text" name="source" id="source" placeholder="Source"
+                                   style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 50%; box-sizing: border-box;">
+                        </div>
+                        <input type="url" name="url" id="url" placeholder="URL"
+                               style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; box-sizing: border-box;">
+                    </div>
+                `;
+            } else {
+                metaHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <input type="text" name="author" id="author" placeholder="${type === 'movie' ? 'Director' : 'Author'}"
+                               style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; margin-bottom: 5px; box-sizing: border-box;">
+                        <input type="number" name="year" id="year" placeholder="Year"
+                               style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; box-sizing: border-box;">
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = `
+                <form method="POST" action="/admin/shelf/add" style="all: unset; display: block;">
+                    <input type="hidden" name="type" value="${type}">
+
+                    ${coverHTML}
+
+                    <!-- Title input matching modal-title -->
+                    <input type="text" name="title" id="title" required placeholder="Title"
+                           style="font-size: 1.1em; margin-bottom: 8px; color: #333; font-weight: bold; line-height: 1.3; border: 1px solid #ddd; width: 100%; padding: 8px; font-family: Georgia, serif; background: #fff; box-sizing: border-box;">
+
+                    ${metaHTML}
+
+                    <!-- Review matching modal-review -->
+                    <textarea name="review" id="review" placeholder="thoughts..."
+                              style="font-size: 0.8em; line-height: 1.8; color: #333; white-space: pre-wrap; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; border: 1px solid #ddd; width: 100%; padding: 8px; font-family: Georgia, serif; min-height: 200px; resize: vertical; box-sizing: border-box; background: #fff;"></textarea>
+
+                    <!-- Save button in bottom right -->
+                    <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
+                        <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                    </div>
+                </form>
+            `;
+
+            modal.classList.add('active');
+
+            // Set up event handlers after modal is displayed
+            setupModalHandlers();
+        }
+
+        function showEditModal(itemId) {
+            const item = allItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            const isEssay = item.type === 'essay';
+
+            // Update modal width for essays
+            const modalContent = document.querySelector('.modal-content');
+            if (isEssay) {
+                modalContent.classList.add('essay-modal');
+            } else {
+                modalContent.classList.remove('essay-modal');
+            }
+
+            // Cover upload HTML - only for books and movies
+            let coverHTML = '';
+            if (!isEssay) {
+                coverHTML = `
+                    <!-- Cover placeholder matching modal-cover size -->
+                    <div style="width: 105px; height: 158px; background: #f5f5f5; ${item.cover_url ? 'background-image: url(' + item.cover_url + '); background-size: cover; background-position: center;' : ''} border: 1px solid #BEBEFF; display: flex; align-items: center; justify-content: center; font-size: 3em; color: #ccc; cursor: pointer; position: relative; margin-bottom: 20px;" id="cover-preview">
+                        ${item.cover_url ? '' : '+'}
+                        <input type="file" id="cover-upload" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                    </div>
+                    <input type="hidden" name="cover_url" id="cover_url" value="${item.cover_url || ''}">
+                `;
+            }
+
+            // Meta fields - different structure for essays
+            let metaHTML = '';
+            if (isEssay) {
+                metaHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <input type="text" name="author" id="author" value="${item.author || ''}" placeholder="Author"
+                                   style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 50%; box-sizing: border-box;">
+                            <input type="text" name="source" id="source" value="${item.source || ''}" placeholder="Source"
+                                   style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 50%; box-sizing: border-box;">
+                        </div>
+                        <input type="url" name="url" id="url" value="${item.url || ''}" placeholder="URL"
+                               style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; box-sizing: border-box;">
+                    </div>
+                `;
+            } else {
+                metaHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <input type="text" name="author" id="author" value="${item.author || ''}" placeholder="${item.type === 'movie' ? 'Director' : 'Author'}"
+                               style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; margin-bottom: 5px; box-sizing: border-box;">
+                        <input type="number" name="year" id="year" value="${item.year || ''}" placeholder="Year"
+                               style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; box-sizing: border-box;">
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = `
+                <form method="POST" action="/admin/shelf/update/${item.id}" style="all: unset; display: block;">
+                    <input type="hidden" name="type" value="${item.type}">
+
+                    ${coverHTML}
+
+                    <!-- Title input matching modal-title -->
+                    <input type="text" name="title" id="title" required value="${item.title}" placeholder="Title"
+                           style="font-size: 1.1em; margin-bottom: 8px; color: #333; font-weight: bold; line-height: 1.3; border: 1px solid #ddd; width: 100%; padding: 8px; font-family: Georgia, serif; background: #fff; box-sizing: border-box;">
+
+                    ${metaHTML}
+
+                    <!-- Review matching modal-review -->
+                    <textarea name="review" id="review" placeholder="thoughts..."
+                              style="font-size: 0.8em; line-height: 1.8; color: #333; white-space: pre-wrap; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; border: 1px solid #ddd; width: 100%; padding: 8px; font-family: Georgia, serif; min-height: 200px; resize: vertical; box-sizing: border-box; background: #fff;">${item.review || ''}</textarea>
+
+                    <!-- Save button in bottom right -->
+                    <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
+                        <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                    </div>
+                </form>
+            `;
+
+            modal.classList.add('active');
+
+            // Set up event handlers after modal is displayed
+            setupModalHandlers();
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        // Global helper function for updating meta separators
+        function updateMetaPreview() {
+            const author = document.getElementById('author')?.value || '';
+            const year = document.getElementById('year')?.value || '';
+            const source = document.getElementById('source')?.value || '';
+
+            const commaSep = document.getElementById('comma-separator');
+            const dashSep = document.getElementById('dash-separator');
+
+            if (commaSep) {
+                commaSep.style.display = (author && year) ? 'inline' : 'none';
+            }
+            if (dashSep) {
+                dashSep.style.display = ((author || year) && source) ? 'inline' : 'none';
+            }
+        }
+
+        // Set up modal event handlers (called after modal content is inserted)
+        function setupModalHandlers() {
+            const coverUpload = document.getElementById('cover-upload');
+            if (coverUpload) {
+                coverUpload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.getElementById('cover-preview');
+                            preview.style.backgroundImage = 'url(' + e.target.result + ')';
+                            preview.style.backgroundSize = 'cover';
+                            preview.style.backgroundPosition = 'center';
+                            preview.innerHTML = '';
+                            // Store the data URL in the hidden field
+                            document.getElementById('cover_url').value = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }
+
+        function showEditFavorites(type) {
+            // Get all items of this type
+            const items = allItems.filter(item => item.type === type);
+
+            modalBody.innerHTML = `
+                <h2 style="font-size: 1.5em; margin-bottom: 20px; color: #333; font-weight: normal;">Edit Favorites - ${type}</h2>
+                <p style="margin-bottom: 20px; color: #666;">Select items to mark as favorites (will show ❤ badge):</p>
+                <form method="POST" action="/admin/shelf/favorites" style="all: unset; display: block;">
+                    <input type="hidden" name="type" value="${type}">
+                    ${items.map(item => `
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="favorites" value="${item.id}" ${item.badge === '❤' ? 'checked' : ''}
+                                       style="cursor: pointer;">
+                                <span style="font-family: Georgia, serif;">${item.title}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <button type="button" onclick="closeModal()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                        <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                    </div>
+                </form>
+            `;
+            modal.classList.add('active');
+        }
+
+        function showEditMustReads(type) {
+            // Get all items of this type
+            const items = allItems.filter(item => item.type === type);
+
+            modalBody.innerHTML = `
+                <h2 style="font-size: 1.5em; margin-bottom: 20px; color: #333; font-weight: normal;">Edit Must-Reads - ${type}</h2>
+                <p style="margin-bottom: 20px; color: #666;">Select items to mark as must-reads (will show ★ badge):</p>
+                <form method="POST" action="/admin/shelf/must-reads" style="all: unset; display: block;">
+                    <input type="hidden" name="type" value="${type}">
+                    ${items.map(item => `
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="must_reads" value="${item.id}" ${item.badge === '★' ? 'checked' : ''}
+                                       style="cursor: pointer;">
+                                <span style="font-family: Georgia, serif;">${item.title}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <button type="button" onclick="closeModal()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                        <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                    </div>
+                </form>
+            `;
+            modal.classList.add('active');
+        }
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

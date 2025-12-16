@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>writing</title>
+    <link rel="icon" type="image/png" href="/smileyslimeyboy.png">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <nav>
+            <a href="/writing">writing</a>
+            <a href="/shelf">shelf</a>
+            <a href="/misc">misc</a>
+        </nav>
+        <% if (isAdmin) { %>
+            <a href="/admin/logout" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">logout</a>
+        <% } else { %>
+            <a href="#" onclick="openLoginModal(); return false;" class="login-link" style="color: #333; text-decoration: none; font-size: 0.95em; text-transform: lowercase;">login</a>
+        <% } %>
+    </div>
+
+    <div class="container">
+        <!-- NOTES SECTION -->
+        <div style="margin-bottom: 60px;">
+            <h2 style="font-size: 1.2em; font-weight: normal; margin-bottom: 20px;">notes</h2>
+
+            <% if (isAdmin) { %>
+                <div style="margin-bottom: 20px;">
+                    <button onclick="toggleNoteForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">+ add note</button>
+                </div>
+
+                <!-- Inline Add Note Form -->
+                <div id="note-add-form" style="display: none; border: 1px solid #BEBEFF; padding: 20px; margin-bottom: 30px;">
+                    <form method="POST" action="/admin/post">
+                        <input type="hidden" name="type" value="note">
+
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" name="title" placeholder="title" required
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <textarea name="content" placeholder="content" required
+                                      style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; min-height: 150px; resize: vertical; box-sizing: border-box; line-height: 1.6;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="toggleNoteForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">post</button>
+                        </div>
+                    </form>
+                </div>
+            <% } %>
+
+            <% if (notes.length === 0) { %>
+                <div class="no-posts">no notes yet</div>
+            <% } else { %>
+                <div class="archive-list">
+                    <% notes.forEach(note => { %>
+                        <div class="archive-item" style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                            <div class="post-content-<%= note.id %>" style="flex: 1; display: flex; justify-content: space-between; align-items: start; gap: 15px; width: 100%;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <a href="/note/<%= note.id %>"><%= note.title %></a>
+                                    <span class="post-date" style="display: inline; margin-left: 10px;">
+                                        <%= new Date(note.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                    </span>
+                                    <% const preview = getPreview(note.content); %>
+                                    <% if (preview) { %>
+                                        <div class="post-subheading" style="margin-top: 4px; font-size: 0.9em;">
+                                            <%= preview %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                <% if (isAdmin) { %>
+                                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                        <button onclick="editPost('<%= note.id %>')" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">edit</button>
+                                        <form method="POST" action="/admin/delete/<%= note.id %>" style="margin: 0;" onsubmit="return confirm('delete this note?');">
+                                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">delete</button>
+                                        </form>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- ESSAYS SECTION -->
+        <div style="margin-bottom: 60px;">
+            <h2 style="font-size: 1.2em; font-weight: normal; margin-bottom: 20px;">essays</h2>
+
+            <% if (isAdmin) { %>
+                <div style="margin-bottom: 20px;">
+                    <button onclick="toggleEssayForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">+ add essay</button>
+                </div>
+
+                <!-- Inline Add Essay Form -->
+                <div id="essay-add-form" style="display: none; border: 1px solid #BEBEFF; padding: 20px; margin-bottom: 30px;">
+                    <form method="POST" action="/admin/post">
+                        <input type="hidden" name="type" value="post">
+
+                        <div style="margin-bottom: 15px;">
+                            <input type="text" name="title" placeholder="title" required
+                                   style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <textarea name="content" placeholder="content" required
+                                      style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; min-height: 150px; resize: vertical; box-sizing: border-box; line-height: 1.6;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" onclick="toggleEssayForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">post</button>
+                        </div>
+                    </form>
+                </div>
+            <% } %>
+
+            <% if (posts.length === 0) { %>
+                <div class="no-posts">no essays yet</div>
+            <% } else { %>
+                <div class="archive-list">
+                    <% posts.forEach(post => { %>
+                        <div class="archive-item" style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                            <div class="post-content-<%= post.id %>" style="flex: 1; display: flex; justify-content: space-between; align-items: start; gap: 15px; width: 100%;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <a href="/essay/<%= post.id %>"><%= post.title %></a>
+                                    <span class="post-date" style="display: inline; margin-left: 10px;">
+                                        <%= new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                    </span>
+                                    <% const preview = getPreview(post.content); %>
+                                    <% if (preview) { %>
+                                        <div class="post-subheading" style="margin-top: 4px; font-size: 0.9em;">
+                                            <%= preview %>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                <% if (isAdmin) { %>
+                                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                        <button onclick="editPost('<%= post.id %>')" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">edit</button>
+                                        <form method="POST" action="/admin/delete/<%= post.id %>" style="margin: 0;" onsubmit="return confirm('delete this essay?');">
+                                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">delete</button>
+                                        </form>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="footer"></div>
+
+    <%- include('partials/login-modal') %>
+
+    <script>
+        <% if (isAdmin) { %>
+        const postsData = <%- JSON.stringify(posts.concat(notes)) %>;
+        <% } %>
+
+        function toggleNoteForm() {
+            const form = document.getElementById('note-add-form');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+                form.querySelector('form').reset();
+            }
+        }
+
+        function toggleEssayForm() {
+            const form = document.getElementById('essay-add-form');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+                form.querySelector('form').reset();
+            }
+        }
+
+        <% if (isAdmin) { %>
+        function editPost(postId) {
+            const post = postsData.find(p => p.id === postId);
+            if (!post) return;
+
+            const item = event.target.closest('.archive-item');
+            const existingForm = document.getElementById('edit-form-' + postId);
+
+            // If already editing, cancel and restore original content
+            if (existingForm) {
+                existingForm.remove();
+                item.querySelector('.post-content-' + postId).style.display = 'flex';
+                return;
+            }
+
+            // Hide the original post content
+            const contentDiv = item.querySelector('.post-content-' + postId);
+            contentDiv.style.display = 'none';
+
+            // Create edit form that spans full width
+            const editForm = document.createElement('div');
+            editForm.id = 'edit-form-' + postId;
+            editForm.style.cssText = 'border: 1px solid #BEBEFF; padding: 20px; width: 100%;';
+            editForm.innerHTML = `
+                <form method="POST" action="/admin/update/${postId}">
+                    <input type="hidden" name="type" value="${post.type}">
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" name="title" value="${post.title}" required
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <textarea name="content" required
+                                  style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; min-height: 150px; resize: vertical; box-sizing: border-box; line-height: 1.6;">${post.content}</textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" onclick="editPost('${postId}')" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
+                        <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save</button>
+                    </div>
+                </form>
+            `;
+            item.appendChild(editForm);
+        }
+        <% } %>
+    </script>
+</body>
+</html>
