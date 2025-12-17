@@ -169,9 +169,10 @@ app.get('/shelf', async (req, res) => {
         const allItems = await getShelfItems();
         const books = allItems.filter(item => item.type === 'book');
         const movies = allItems.filter(item => item.type === 'movie');
+        const music = allItems.filter(item => item.type === 'music');
         const essays = allItems.filter(item => item.type === 'essay');
         const about = await getAbout();
-        res.render('shelf', { books, movies, essays, aboutContent: about.content || '', isAdmin: req.session.isAdmin || false });
+        res.render('shelf', { books, movies, music, essays, aboutContent: about.content || '', isAdmin: req.session.isAdmin || false });
     } catch (error) {
         console.error('Error loading shelf:', error);
         res.status(500).send('Internal Server Error: ' + error.message);

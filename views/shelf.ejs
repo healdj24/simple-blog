@@ -399,6 +399,7 @@
         <div class="tabs">
             <div class="tab active" data-tab="books">bookshelf</div>
             <div class="tab" data-tab="movies">movie shelf</div>
+            <div class="tab" data-tab="music">music shelf</div>
             <div class="tab" data-tab="essays">essays</div>
         </div>
 
@@ -465,6 +466,43 @@
                                         <% } else { %>
                                             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 10px; text-align: center; font-size: 0.9em; color: #666; box-sizing: border-box;">
                                                 <%= movie.title %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+
+        <!-- Music Tab -->
+        <div class="tab-content" id="music-content">
+            <% if (music.length === 0) { %>
+                <div class="no-items">no music yet</div>
+            <% } else { %>
+                <% const musicByYear = {}; %>
+                <% music.forEach(album => {
+                    const year = album.year || 'Unknown';
+                    if (!musicByYear[year]) musicByYear[year] = [];
+                    musicByYear[year].push(album);
+                }); %>
+                <% Object.keys(musicByYear).sort((a, b) => b - a).forEach(year => { %>
+                    <div class="year-group">
+                        <div class="year-header"><%= year %></div>
+                        <div class="grid">
+                            <% musicByYear[year].forEach(album => { %>
+                                <div class="grid-item" onclick="showItemModal('<%= album.id %>')">
+                                    <div class="cover">
+                                        <% if (album.badge) { %>
+                                            <span class="badge"><%= album.badge %></span>
+                                        <% } %>
+                                        <% if (album.cover_url) { %>
+                                            <img src="<%= album.cover_url %>" alt="<%= album.title %>">
+                                        <% } else { %>
+                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 10px; text-align: center; font-size: 0.9em; color: #666; box-sizing: border-box;">
+                                                <%= album.title %>
                                             </div>
                                         <% } %>
                                     </div>
@@ -563,7 +601,7 @@
 
     <script>
         const isAdmin = <%= isAdmin ? 'true' : 'false' %>;
-        const allItems = <%- JSON.stringify([].concat(books).concat(movies).concat(essays)) %>;
+        const allItems = <%- JSON.stringify([].concat(books).concat(movies).concat(music).concat(essays)) %>;
 
         // Track current tab type
         let currentType = 'book';
@@ -603,6 +641,9 @@
                 } else if (tabName === 'movies') {
                     currentType = 'movie';
                     document.getElementById('add-btn').textContent = '+ add movie';
+                } else if (tabName === 'music') {
+                    currentType = 'music';
+                    document.getElementById('add-btn').textContent = '+ add music';
                 } else if (tabName === 'essays') {
                     currentType = 'essay';
                     document.getElementById('add-btn').textContent = '+ add essay';
@@ -734,9 +775,10 @@
                     </div>
                 `;
             } else {
+                const authorLabel = type === 'movie' ? 'Director' : (type === 'music' ? 'Artist' : 'Author');
                 metaHTML = `
                     <div style="margin-bottom: 8px;">
-                        <input type="text" name="author" id="author" placeholder="${type === 'movie' ? 'Director' : 'Author'}"
+                        <input type="text" name="author" id="author" placeholder="${authorLabel}"
                                style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; margin-bottom: 5px; box-sizing: border-box;">
                         <input type="number" name="year" id="year" placeholder="Year"
                                style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; box-sizing: border-box;">
@@ -816,9 +858,10 @@
                     </div>
                 `;
             } else {
+                const authorLabel = item.type === 'movie' ? 'Director' : (item.type === 'music' ? 'Artist' : 'Author');
                 metaHTML = `
                     <div style="margin-bottom: 8px;">
-                        <input type="text" name="author" id="author" value="${item.author || ''}" placeholder="${item.type === 'movie' ? 'Director' : 'Author'}"
+                        <input type="text" name="author" id="author" value="${item.author || ''}" placeholder="${authorLabel}"
                                style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; margin-bottom: 5px; box-sizing: border-box;">
                         <input type="number" name="year" id="year" value="${item.year || ''}" placeholder="Year"
                                style="border: 1px solid #ddd; background: #fff; color: #888; font-family: Georgia, serif; font-size: 0.85em; padding: 6px 8px; width: 100%; box-sizing: border-box;">
