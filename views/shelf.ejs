@@ -342,6 +342,43 @@
             margin-bottom: 20px;
             font-weight: normal;
         }
+
+        /* Filter buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-btn {
+            background: none;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-family: Georgia, serif;
+            text-transform: lowercase;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .filter-btn.active {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
     </style>
 </head>
 <body>
@@ -405,6 +442,14 @@
 
         <!-- Books Tab -->
         <div class="tab-content active" id="books-content">
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <span class="filter-label">filter:</span>
+                <button class="filter-btn active" data-filter="all" data-type="book">all</button>
+                <button class="filter-btn" data-filter="★" data-type="book">★ all-timers</button>
+                <button class="filter-btn" data-filter="❤" data-type="book">❤ liked</button>
+            </div>
+
             <% if (books.length === 0) { %>
                 <div class="no-items">no books yet</div>
             <% } else { %>
@@ -442,6 +487,14 @@
 
         <!-- Movies Tab -->
         <div class="tab-content" id="movies-content">
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <span class="filter-label">filter:</span>
+                <button class="filter-btn active" data-filter="all" data-type="movie">all</button>
+                <button class="filter-btn" data-filter="★" data-type="movie">★ all-timers</button>
+                <button class="filter-btn" data-filter="❤" data-type="movie">❤ liked</button>
+            </div>
+
             <% if (movies.length === 0) { %>
                 <div class="no-items">no movies yet</div>
             <% } else { %>
@@ -479,6 +532,14 @@
 
         <!-- Music Tab -->
         <div class="tab-content" id="music-content">
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <span class="filter-label">filter:</span>
+                <button class="filter-btn active" data-filter="all" data-type="music">all</button>
+                <button class="filter-btn" data-filter="★" data-type="music">★ all-timers</button>
+                <button class="filter-btn" data-filter="❤" data-type="music">❤ liked</button>
+            </div>
+
             <% if (music.length === 0) { %>
                 <div class="no-items">no music yet</div>
             <% } else { %>
@@ -516,6 +577,13 @@
 
         <!-- Essays Tab -->
         <div class="tab-content" id="essays-content">
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <span class="filter-label">filter:</span>
+                <button class="filter-btn active" data-filter="all" data-type="essay">all</button>
+                <button class="filter-btn" data-filter="★" data-type="essay">★ core texts</button>
+            </div>
+
             <% if (isAdmin) { %>
                 <!-- Inline Add Essay Form -->
                 <div id="essay-add-form" style="display: none; border: 1px solid #BEBEFF; padding: 20px; margin-bottom: 30px;">
@@ -1000,6 +1068,70 @@
             if (e.target === modal) {
                 closeModal();
             }
+        });
+
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                const type = this.dataset.type;
+
+                // Update active button state for this type
+                const typeButtons = document.querySelectorAll(`.filter-btn[data-type="${type}"]`);
+                typeButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Filter items
+                const tabContent = this.closest('.tab-content');
+                const yearGroups = tabContent.querySelectorAll('.year-group');
+
+                yearGroups.forEach(yearGroup => {
+                    const items = yearGroup.querySelectorAll('.grid-item');
+                    let visibleCount = 0;
+
+                    items.forEach(item => {
+                        if (filter === 'all') {
+                            item.style.display = '';
+                            visibleCount++;
+                        } else {
+                            const badge = item.querySelector('.badge');
+                            if (badge && badge.textContent === filter) {
+                                item.style.display = '';
+                                visibleCount++;
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        }
+                    });
+
+                    // Hide year group if no items are visible
+                    if (visibleCount === 0) {
+                        yearGroup.style.display = 'none';
+                    } else {
+                        yearGroup.style.display = '';
+                    }
+                });
+
+                // Handle essay list items (essays use list layout, not grid)
+                if (type === 'essay') {
+                    const listItems = tabContent.querySelectorAll('.list-item');
+                    listItems.forEach(item => {
+                        if (filter === 'all') {
+                            item.style.display = '';
+                        } else {
+                            // Essays don't have visible badges, so we need to check allItems array
+                            const itemId = item.querySelector('.edit-btn')?.onclick.toString().match(/'([^']+)'/)?.[1];
+                            const essayData = allItems.find(e => e.id === itemId);
+                            if (essayData && essayData.badge === filter) {
+                                item.style.display = '';
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>
