@@ -48,7 +48,8 @@
 
                         <div style="display: flex; gap: 10px;">
                             <button type="button" onclick="toggleNoteForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
-                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">post</button>
+                            <button type="submit" name="status" value="draft" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save as draft</button>
+                            <button type="submit" name="status" value="published" style="background: none; color: #333; border: 1px solid #4CAF50; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">publish</button>
                         </div>
                     </form>
                 </div>
@@ -75,6 +76,11 @@
                                 </div>
                                 <% if (isAdmin) { %>
                                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                        <% if (note.status === 'draft') { %>
+                                            <form method="POST" action="/admin/publish/<%= note.id %>" style="margin: 0;">
+                                                <button type="submit" style="background: none; color: #333; border: 1px solid #4CAF50; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">publish</button>
+                                            </form>
+                                        <% } %>
                                         <button onclick="editPost('<%= note.id %>')" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">edit</button>
                                         <form method="POST" action="/admin/delete/<%= note.id %>" style="margin: 0;" onsubmit="return confirm('delete this note?');">
                                             <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">delete</button>
@@ -114,7 +120,8 @@
 
                         <div style="display: flex; gap: 10px;">
                             <button type="button" onclick="toggleEssayForm()" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">cancel</button>
-                            <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">post</button>
+                            <button type="submit" name="status" value="draft" style="background: none; color: #333; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">save as draft</button>
+                            <button type="submit" name="status" value="published" style="background: none; color: #333; border: 1px solid #4CAF50; padding: 8px 16px; cursor: pointer; font-size: 0.9em; font-family: Georgia, serif; text-transform: lowercase;">publish</button>
                         </div>
                     </form>
                 </div>
@@ -141,6 +148,11 @@
                                 </div>
                                 <% if (isAdmin) { %>
                                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                        <% if (post.status === 'draft') { %>
+                                            <form method="POST" action="/admin/publish/<%= post.id %>" style="margin: 0;">
+                                                <button type="submit" style="background: none; color: #333; border: 1px solid #4CAF50; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">publish</button>
+                                            </form>
+                                        <% } %>
                                         <button onclick="editPost('<%= post.id %>')" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">edit</button>
                                         <form method="POST" action="/admin/delete/<%= post.id %>" style="margin: 0;" onsubmit="return confirm('delete this essay?');">
                                             <button type="submit" style="background: none; color: #333; border: 1px solid #ddd; padding: 4px 10px; cursor: pointer; font-size: 0.85em; font-family: Georgia, serif; text-transform: lowercase;">delete</button>
@@ -210,6 +222,7 @@
             editForm.innerHTML = `
                 <form method="POST" action="/admin/update/${postId}">
                     <input type="hidden" name="type" value="${post.type}">
+                    <input type="hidden" name="status" value="${post.status || 'published'}">
                     <div style="margin-bottom: 15px;">
                         <input type="text" name="title" value="${post.title}" required
                                style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: Georgia, serif; font-size: 1em; box-sizing: border-box;">

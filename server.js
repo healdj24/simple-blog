@@ -132,14 +132,20 @@ app.get('/', (req, res) => {
 
 // Writing page - combines essays and notes
 app.get('/writing', async (req, res) => {
+    const isAdmin = req.session.isAdmin || false;
     const allPosts = await getPosts();
-    const notes = allPosts.filter(p => p.type === 'note').sort((a, b) => new Date(b.date) - new Date(a.date));
-    const posts = allPosts.filter(p => p.type === 'post').sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // For non-admin, only show published posts
+    const visiblePosts = isAdmin ? allPosts : allPosts.filter(p => p.status === 'published');
+
+    const notes = visiblePosts.filter(p => p.type === 'note').sort((a, b) => new Date(b.date) - new Date(a.date));
+    const posts = visiblePosts.filter(p => p.type === 'post').sort((a, b) => new Date(b.date) - new Date(a.date));
+
     res.render('writing', {
         notes,
         posts,
         getPreview,
-        isAdmin: req.session.isAdmin || false
+        isAdmin
     });
 });
 
@@ -181,22 +187,24 @@ app.get('/shelf', async (req, res) => {
 
 // Individual essay page
 app.get('/essay/:id', async (req, res) => {
+    const isAdmin = req.session.isAdmin || false;
     const allPosts = await getPosts();
     const post = allPosts.find(p => p.id === req.params.id);
-    if (!post) {
+    if (!post || (post.status === 'draft' && !isAdmin)) {
         return res.redirect('/');
     }
-    res.render('single', { post, getPreview, formatContent, isAdmin: req.session.isAdmin || false });
+    res.render('single', { post, getPreview, formatContent, isAdmin });
 });
 
 // Individual note page
 app.get('/note/:id', async (req, res) => {
+    const isAdmin = req.session.isAdmin || false;
     const allPosts = await getPosts();
     const post = allPosts.find(p => p.id === req.params.id);
-    if (!post) {
+    if (!post || (post.status === 'draft' && !isAdmin)) {
         return res.redirect('/ss');
     }
-    res.render('single', { post, getPreview, formatContent, isAdmin: req.session.isAdmin || false });
+    res.render('single', { post, getPreview, formatContent, isAdmin });
 });
 
 // Archive page
@@ -239,17 +247,18 @@ app.post('/api/login', (req, res) => {
 
 // Create new post
 app.post('/admin/post', requireAuth, async (req, res) => {
-    const { title, content, type } = req.body;
+    const { title, content, type, status } = req.body;
     const newPost = {
         id: Date.now().toString(),
         title: title.trim(),
         content: content.trim(),
         type: type || 'post',
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        status: status || 'draft'
     };
     await db.execute({
-        sql: 'INSERT INTO posts (id, title, content, type, date) VALUES (?, ?, ?, ?, ?)',
-        args: [newPost.id, newPost.title, newPost.content, newPost.type, newPost.date]
+        sql: 'INSERT INTO posts (id, title, content, type, date, status) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [newPost.id, newPost.title, newPost.content, newPost.type, newPost.date, newPost.status]
     });
 
     // Redirect to writing page
@@ -304,13 +313,22 @@ app.get('/admin/edit/:id', requireAuth, async (req, res) => {
 
 // Update post
 app.post('/admin/update/:id', requireAuth, async (req, res) => {
-    const { title, content, type } = req.body;
+    const { title, content, type, status } = req.body;
     await db.execute({
-        sql: 'UPDATE posts SET title = ?, content = ? WHERE id = ?',
-        args: [title.trim(), content.trim(), req.params.id]
+        sql: 'UPDATE posts SET title = ?, content = ?, status = ? WHERE id = ?',
+        args: [title.trim(), content.trim(), status || 'draft', req.params.id]
     });
 
     // Redirect to writing page
+    res.redirect('/writing');
+});
+
+// Publish a draft
+app.post('/admin/publish/:id', requireAuth, async (req, res) => {
+    await db.execute({
+        sql: 'UPDATE posts SET status = ? WHERE id = ?',
+        args: ['published', req.params.id]
+    });
     res.redirect('/writing');
 });
 
