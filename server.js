@@ -407,10 +407,17 @@ app.post('/admin/shelf/add', requireAuth, upload.single('cover_image'), async (r
 
 // Update shelf item
 app.post('/admin/shelf/update/:id', requireAuth, upload.single('cover_image'), async (req, res) => {
-    const { type, title, author, source, url, cover_url, year, badge, review } = req.body;
+    const { type, title, author, source, url, year, badge, review } = req.body;
 
-    // Use uploaded file path if available, otherwise use provided URL
-    let coverUrlValue = cover_url ? cover_url.trim() : null;
+    // Get existing item to preserve cover_url if no new file uploaded
+    const existingResult = await db.execute({
+        sql: 'SELECT cover_url FROM shelf_items WHERE id = ?',
+        args: [req.params.id]
+    });
+    const existingItem = existingResult.rows[0];
+
+    // Use uploaded file path if available, otherwise keep existing cover
+    let coverUrlValue = existingItem?.cover_url || null;
     if (req.file) {
         coverUrlValue = '/uploads/covers/' + req.file.filename;
     }
