@@ -11,7 +11,7 @@
         .tabs {
             display: flex;
             gap: 30px;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
             border-bottom: 1px solid #ddd;
         }
 
@@ -109,6 +109,8 @@
         /* List layout for essays */
         .list {
             max-width: 720px;
+            margin: 0;
+            text-align: left;
         }
 
         .list-item {
@@ -123,6 +125,7 @@
 
         .list-item-content {
             flex: 1;
+            text-align: left;
         }
 
         .list-item-title {
@@ -130,6 +133,7 @@
             color: #333;
             margin-bottom: 4px;
             display: block;
+            font-weight: bold;
         }
 
         .list-item-title:hover {
@@ -145,6 +149,16 @@
         .list-item-author {
             font-size: 0.9em;
             color: #888;
+            margin-bottom: 4px;
+        }
+
+        .list-item-review {
+            margin-top: 8px;
+            color: #333;
+            font-size: 0.95em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            text-align: left !important;
         }
 
         .list-item-source {
@@ -333,13 +347,13 @@
         }
 
         .year-group {
-            margin-bottom: 50px;
+            margin-bottom: 38px;
         }
 
         .year-header {
             font-size: 1.1em;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-weight: normal;
         }
 
@@ -347,7 +361,7 @@
         .filter-buttons {
             display: flex;
             gap: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 18px;
             align-items: center;
         }
 
@@ -361,13 +375,19 @@
         .filter-btn {
             background: none;
             color: #333;
-            border: 1px solid #ddd;
+            border: 1px solid #BEBEFF;
             padding: 6px 12px;
             cursor: pointer;
             font-size: 0.85em;
             font-family: Georgia, serif;
             text-transform: lowercase;
             transition: all 0.2s;
+            white-space: nowrap;
+            min-width: fit-content;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            box-sizing: border-box;
         }
 
         .filter-btn:hover {
@@ -378,6 +398,22 @@
             background: #333;
             color: #fff;
             border-color: #333;
+        }
+
+        /* Admin buttons */
+        .add-btn {
+            background: none;
+            color: #333;
+            border: 1px solid #BEBEFF;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-family: Georgia, serif;
+            text-transform: lowercase;
+        }
+
+        .add-btn:hover {
+            background: #f5f5f5;
         }
     </style>
 </head>
@@ -397,7 +433,7 @@
 
     <div class="container shelf-container">
         <!-- About Section -->
-        <div style="margin-bottom: 40px;">
+        <div style="margin-bottom: 24px;">
             <div id="about-content-display" class="archive-list" style="position: relative;">
                 <div style="white-space: pre-wrap; line-height: 1.6;"><%= aboutContent || 'No about content yet.' %></div>
                 <% if (isAdmin) { %>
@@ -426,10 +462,10 @@
         </div>
 
         <% if (isAdmin) { %>
-            <div class="admin-controls" id="admin-controls" style="margin-bottom: 20px;">
+            <div class="admin-controls" id="admin-controls" style="margin-bottom: 15px;">
                 <button class="add-btn" id="add-btn" onclick="addCurrentType()">+ add book</button>
-                <button class="add-btn" onclick="editFavoritesCurrentType()" style="margin-left: 8px;">edit favorites</button>
-                <button class="add-btn" onclick="editMustReadsCurrentType()" style="margin-left: 8px;">edit must-reads</button>
+                <button class="add-btn" id="edit-btn-1" onclick="editFavoritesCurrentType()" style="margin-left: 8px;">edit liked</button>
+                <button class="add-btn" id="edit-btn-2" onclick="editMustReadsCurrentType()" style="margin-left: 8px;">edit all timers</button>
             </div>
         <% } %>
 
@@ -639,6 +675,9 @@
                                         <% if (essay.source) { %><%= essay.source %><% } %>
                                     </div>
                                 <% } %>
+                                <% if (essay.review) { %>
+                                    <p style="margin-top: 8px; margin-bottom: 0; color: #333; font-size: 0.95em; line-height: 1.6; white-space: pre-wrap;"><%=essay.review %></p>
+                                <% } %>
                             </div>
                             <% if (isAdmin) { %>
                                 <div class="item-actions">
@@ -703,18 +742,36 @@
                 document.getElementById(tabName + '-content').classList.add('active');
 
                 // Update current type and button text
+                const editBtn1 = document.getElementById('edit-btn-1');
+                const editBtn2 = document.getElementById('edit-btn-2');
+
                 if (tabName === 'books') {
                     currentType = 'book';
                     document.getElementById('add-btn').textContent = '+ add book';
+                    editBtn1.style.display = 'inline-block';
+                    editBtn2.style.display = 'inline-block';
+                    editBtn1.textContent = 'edit liked';
+                    editBtn2.textContent = 'edit all timers';
                 } else if (tabName === 'movies') {
                     currentType = 'movie';
                     document.getElementById('add-btn').textContent = '+ add movie';
+                    editBtn1.style.display = 'inline-block';
+                    editBtn2.style.display = 'inline-block';
+                    editBtn1.textContent = 'edit liked';
+                    editBtn2.textContent = 'edit all timers';
                 } else if (tabName === 'music') {
                     currentType = 'music';
                     document.getElementById('add-btn').textContent = '+ add music';
+                    editBtn1.style.display = 'inline-block';
+                    editBtn2.style.display = 'inline-block';
+                    editBtn1.textContent = 'edit liked';
+                    editBtn2.textContent = 'edit all timers';
                 } else if (tabName === 'essays') {
                     currentType = 'essay';
                     document.getElementById('add-btn').textContent = '+ add essay';
+                    editBtn1.style.display = 'none';
+                    editBtn2.style.display = 'inline-block';
+                    editBtn2.textContent = 'edit core texts';
                 }
             });
         });
@@ -821,9 +878,8 @@
                     <!-- Cover placeholder matching modal-cover size -->
                     <div style="width: 105px; height: 158px; background: #f5f5f5; border: 1px solid #BEBEFF; display: flex; align-items: center; justify-content: center; font-size: 3em; color: #ccc; cursor: pointer; position: relative; margin-bottom: 20px;" id="cover-preview">
                         +
-                        <input type="file" id="cover-upload" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                        <input type="file" name="cover_image" id="cover-upload" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
                     </div>
-                    <input type="hidden" name="cover_url" id="cover_url">
                 `;
             }
 
@@ -855,7 +911,7 @@
             }
 
             modalBody.innerHTML = `
-                <form method="POST" action="/admin/shelf/add" style="all: unset; display: block;">
+                <form method="POST" action="/admin/shelf/add" enctype="multipart/form-data" style="all: unset; display: block;">
                     <input type="hidden" name="type" value="${type}">
 
                     ${coverHTML}
@@ -904,9 +960,9 @@
                     <!-- Cover placeholder matching modal-cover size -->
                     <div style="width: 105px; height: 158px; background: #f5f5f5; ${item.cover_url ? 'background-image: url(' + item.cover_url + '); background-size: cover; background-position: center;' : ''} border: 1px solid #BEBEFF; display: flex; align-items: center; justify-content: center; font-size: 3em; color: #ccc; cursor: pointer; position: relative; margin-bottom: 20px;" id="cover-preview">
                         ${item.cover_url ? '' : '+'}
-                        <input type="file" id="cover-upload" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                        <input type="file" name="cover_image" id="cover-upload" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
                     </div>
-                    <input type="hidden" name="cover_url" id="cover_url" value="${item.cover_url || ''}">
+                    <input type="hidden" name="cover_url" value="${item.cover_url || ''}">
                 `;
             }
 
@@ -938,7 +994,7 @@
             }
 
             modalBody.innerHTML = `
-                <form method="POST" action="/admin/shelf/update/${item.id}" style="all: unset; display: block;">
+                <form method="POST" action="/admin/shelf/update/${item.id}" enctype="multipart/form-data" style="all: unset; display: block;">
                     <input type="hidden" name="type" value="${item.type}">
 
                     ${coverHTML}
@@ -1001,8 +1057,6 @@
                             preview.style.backgroundSize = 'cover';
                             preview.style.backgroundPosition = 'center';
                             preview.innerHTML = '';
-                            // Store the data URL in the hidden field
-                            document.getElementById('cover_url').value = e.target.result;
                         };
                         reader.readAsDataURL(file);
                     }

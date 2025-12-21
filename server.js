@@ -2,9 +2,41 @@ const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const { createClient } = require('@libsql/client');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, 'public', 'uploads', 'covers');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: function (req, file, cb) {
+        const filetypes = /jpeg|jpg|png|gif|webp/;
+        const mimetype = filetypes.test(file.mimetype);
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        cb(new Error('Only image files are allowed!'));
+    }
+});
 
 // Initialize database (Turso for production)
 const db = createClient({
@@ -344,8 +376,15 @@ app.post('/admin/delete/:id', requireAuth, async (req, res) => {
 });
 
 // Add shelf item
-app.post('/admin/shelf/add', requireAuth, async (req, res) => {
+app.post('/admin/shelf/add', requireAuth, upload.single('cover_image'), async (req, res) => {
     const { type, title, author, source, url, cover_url, year, badge, review } = req.body;
+
+    // Use uploaded file path if available, otherwise use provided URL
+    let coverUrlValue = cover_url ? cover_url.trim() : null;
+    if (req.file) {
+        coverUrlValue = '/uploads/covers/' + req.file.filename;
+    }
+
     const newItem = {
         id: Date.now().toString(),
         type: type.trim(),
@@ -353,7 +392,7 @@ app.post('/admin/shelf/add', requireAuth, async (req, res) => {
         author: author ? author.trim() : null,
         source: source ? source.trim() : null,
         url: url ? url.trim() : null,
-        cover_url: cover_url ? cover_url.trim() : null,
+        cover_url: coverUrlValue,
         year: year ? parseInt(year) : null,
         badge: badge ? badge.trim() : null,
         review: review ? review.trim() : null,
@@ -367,8 +406,15 @@ app.post('/admin/shelf/add', requireAuth, async (req, res) => {
 });
 
 // Update shelf item
-app.post('/admin/shelf/update/:id', requireAuth, async (req, res) => {
+app.post('/admin/shelf/update/:id', requireAuth, upload.single('cover_image'), async (req, res) => {
     const { type, title, author, source, url, cover_url, year, badge, review } = req.body;
+
+    // Use uploaded file path if available, otherwise use provided URL
+    let coverUrlValue = cover_url ? cover_url.trim() : null;
+    if (req.file) {
+        coverUrlValue = '/uploads/covers/' + req.file.filename;
+    }
+
     await db.execute({
         sql: 'UPDATE shelf_items SET type = ?, title = ?, author = ?, source = ?, url = ?, cover_url = ?, year = ?, badge = ?, review = ? WHERE id = ?',
         args: [
@@ -377,7 +423,7 @@ app.post('/admin/shelf/update/:id', requireAuth, async (req, res) => {
             author ? author.trim() : null,
             source ? source.trim() : null,
             url ? url.trim() : null,
-            cover_url ? cover_url.trim() : null,
+            coverUrlValue,
             year ? parseInt(year) : null,
             badge ? badge.trim() : null,
             review ? review.trim() : null,
