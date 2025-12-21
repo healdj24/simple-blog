@@ -376,14 +376,8 @@ app.post('/admin/delete/:id', requireAuth, async (req, res) => {
 });
 
 // Add shelf item
-app.post('/admin/shelf/add', requireAuth, upload.single('cover_image'), async (req, res) => {
+app.post('/admin/shelf/add', requireAuth, async (req, res) => {
     const { type, title, author, source, url, cover_url, year, badge, review } = req.body;
-
-    // Use uploaded file path if available, otherwise use provided URL
-    let coverUrlValue = cover_url ? cover_url.trim() : null;
-    if (req.file) {
-        coverUrlValue = '/uploads/covers/' + req.file.filename;
-    }
 
     const newItem = {
         id: Date.now().toString(),
@@ -392,7 +386,7 @@ app.post('/admin/shelf/add', requireAuth, upload.single('cover_image'), async (r
         author: author ? author.trim() : null,
         source: source ? source.trim() : null,
         url: url ? url.trim() : null,
-        cover_url: coverUrlValue,
+        cover_url: cover_url ? cover_url.trim() : null,
         year: year ? parseInt(year) : null,
         badge: badge ? badge.trim() : null,
         review: review ? review.trim() : null,
@@ -406,21 +400,18 @@ app.post('/admin/shelf/add', requireAuth, upload.single('cover_image'), async (r
 });
 
 // Update shelf item
-app.post('/admin/shelf/update/:id', requireAuth, upload.single('cover_image'), async (req, res) => {
-    const { type, title, author, source, url, year, badge, review } = req.body;
+app.post('/admin/shelf/update/:id', requireAuth, async (req, res) => {
+    const { type, title, author, source, url, cover_url, year, badge, review } = req.body;
 
-    // Get existing item to preserve cover_url if no new file uploaded
+    // Get existing item to preserve cover_url if no new image uploaded
     const existingResult = await db.execute({
         sql: 'SELECT cover_url FROM shelf_items WHERE id = ?',
         args: [req.params.id]
     });
     const existingItem = existingResult.rows[0];
 
-    // Use uploaded file path if available, otherwise keep existing cover
-    let coverUrlValue = existingItem?.cover_url || null;
-    if (req.file) {
-        coverUrlValue = '/uploads/covers/' + req.file.filename;
-    }
+    // Use new cover_url if provided, otherwise keep existing
+    let coverUrlValue = cover_url ? cover_url.trim() : (existingItem?.cover_url || null);
 
     await db.execute({
         sql: 'UPDATE shelf_items SET type = ?, title = ?, author = ?, source = ?, url = ?, cover_url = ?, year = ?, badge = ?, review = ? WHERE id = ?',
