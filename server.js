@@ -401,11 +401,11 @@ app.post('/admin/shelf/add', requireAuth, async (req, res) => {
 
 // Update shelf item
 app.post('/admin/shelf/update/:id', requireAuth, async (req, res) => {
-    const { type, title, author, source, url, cover_url, year, badge, review } = req.body;
+    const { title, author, source, url, cover_url, year, badge, review } = req.body;
 
-    // Get existing item to preserve cover_url if no new image uploaded
+    // Get existing item to preserve type and cover_url
     const existingResult = await db.execute({
-        sql: 'SELECT cover_url FROM shelf_items WHERE id = ?',
+        sql: 'SELECT type, cover_url FROM shelf_items WHERE id = ?',
         args: [req.params.id]
     });
     const existingItem = existingResult.rows[0];
@@ -416,7 +416,7 @@ app.post('/admin/shelf/update/:id', requireAuth, async (req, res) => {
     await db.execute({
         sql: 'UPDATE shelf_items SET type = ?, title = ?, author = ?, source = ?, url = ?, cover_url = ?, year = ?, badge = ?, review = ? WHERE id = ?',
         args: [
-            type.trim(),
+            existingItem.type,
             title.trim(),
             author ? author.trim() : null,
             source ? source.trim() : null,
