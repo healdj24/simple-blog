@@ -45,8 +45,9 @@ const db = createClient({
 });
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
-app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.text({ limit: '50mb', type: 'text/*' }));
 app.use(express.static('public'));
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
@@ -401,6 +402,10 @@ app.post('/admin/shelf/add', requireAuth, async (req, res) => {
 
 // Update shelf item
 app.post('/admin/shelf/update/:id', requireAuth, async (req, res) => {
+    console.log('=== UPDATE REQUEST ===');
+    console.log('req.body:', req.body);
+    console.log('req.params.id:', req.params.id);
+
     const { title, author, source, url, cover_url, year, badge, review } = req.body;
 
     // Get existing item to preserve type and cover_url

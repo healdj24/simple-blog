@@ -993,7 +993,7 @@
             }
 
             modalBody.innerHTML = `
-                <form method="POST" action="/admin/shelf/update/${item.id}" enctype="multipart/form-data">
+                <form method="POST" action="/admin/shelf/update/${item.id}">
                     <input type="hidden" name="type" value="${item.type}">
 
                     ${coverHTML}
